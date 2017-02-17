@@ -1,54 +1,46 @@
 import numpy as np
 import cv2
 import setLines
+import timer
 
-# cv2.namedWindow('edges')
-
-#Creating Trackbars for Canny
-# cv2.createTrackbar('CannyMin','edges',0,1000,nothing)
-# cv2.createTrackbar('CannyMax','edges',0,1000,nothing)
-
-
-boxes = []
 
 def drawStartAndFinishLines(points, frame):
-    print "points[0]", points[0]
-    print "points[0][1]", points[0][1]
-    frame = cv2.line(frame,(0,0),(511,511),(255,0,0),5)
+    frame = cv2.line(frame,(points[0][0],points[0][1]),(points[0][2],points[0][1]),(0,255,0),3)
+    frame = cv2.line(frame,(points[0][0],points[0][3]),(points[0][2],points[0][3]),(255,255,255),5)
     return frame
-
 
 def run():
     prevCnts = []
-    cap = cv2.VideoCapture('./videos/3.mp4')
+    cap = cv2.VideoCapture('../videos/3.mp4')
+
+    cap.set(3,640)
+    cap.set(4,480)
     #MOG 2 background substraction
     fgbg = cv2.createBackgroundSubtractorMOG2(detectShadows=False)
     
-
     if not cap.isOpened():
         print "Error: Video device or file couldn't be opened"
         exit()
 
     print "Press space to choose start/finish line"
 
-    while True:
-        # Retrieve an image and Display it.
-        retval, img = cap.read()
-        if not retval:
-            print "Error: Cannot capture frame device"
-            exit()
-        if(cv2.waitKey(10)==ord(' ')):
-            break
-        cv2.namedWindow("Image")
-        cv2.imshow("Image", img)
-    cv2.destroyWindow("Image")
+    # Retrieve an image and Display it.
+    retval, img = cap.read()
+    if not retval:
+        print "Error: Cannot capture frame device"
+        exit()
     
     points = setLines.run(img)
-
+    cv2.destroyWindow("Image")
     if not points:
         print "ERROR: No start and finish lines had been set."
         exit()
-    print points
+
+    # Start time
+    # start = time.time()
+
+    isTimerStarted = False
+    isTimerFinished = False
     while True:
         
         if 'cntsNew' in locals():
@@ -56,6 +48,8 @@ def run():
             
         #read frame
         ret, frame = cap.read()
+
+        frame = cv2.resize(frame, (640, 480))  
         #BGR to gray
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -98,14 +92,19 @@ def run():
                             cv2.circle(frame,(cXjM,cYjM), 50, (0,0,255), 2)
                         
         cv2.drawContours(frame, cntsNew, -1, (255,0,0), -1)
-
+        if (timer.isStarted(points, cntsNew)):
+            print "Started"
+        if (timer.isFinished(points, cntsNew)):
+            print "Finished"
         frame = drawStartAndFinishLines(points, frame)
 
+        
+        cv2.namedWindow('frame',cv2.WINDOW_NORMAL)
+        cv2.resizeWindow('frame', 640,480)
         cv2.imshow('frame',frame)
-        # cv2.imshow('edges',edges)
-        # cv2.imshow('fgbg',fgmask)
         if cv2.waitKey(1) & 0xFF == ord(' '):
             break
+            exit()
     cap.release()
     cv2.destroyAllWindows()
 
