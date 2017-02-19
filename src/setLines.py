@@ -35,7 +35,7 @@ def run(im, multi = False):
     
     while True:
         # Draw the rectangular boxes on the image
-        window_2 = "Objects to be tracked."
+        window_2 = "Lines"
         for pt1, pt2 in zip(pts_1, pts_2):
             rects.append([pt1[0],pt2[0], pt1[1], pt2[1]])
             cv2.rectangle(im_disp, pt1, pt2, (255, 255, 255), 1)
@@ -51,12 +51,12 @@ def run(im, multi = False):
         elif key == ord('d'):
             # Press ket `d` to delete the last rectangular region
             if run.mouse_down == False and pts_1:
-                print "Object deleted at  [{}, {}]".format(pts_1[-1], pts_2[-1])
+                print "Lines deleted at  [{}, {}]".format(pts_1[-1], pts_2[-1])
                 pts_1.pop()
                 pts_2.pop()
                 im_disp = im.copy()
             else:
-                print "No object to delete."
+                print "No lines to delete."
     cv2.destroyAllWindows()
     pnt= [(tl + br) for tl, br in zip(pts_1, pts_2)]
     new_pnt=pnt

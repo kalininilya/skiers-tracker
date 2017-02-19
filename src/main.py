@@ -1,7 +1,9 @@
 import numpy as np
 import cv2
 import setLines
+import time
 import timer
+import os
 
 
 def drawStartAndFinishLines(points, frame):
@@ -13,8 +15,7 @@ def run():
     prevCnts = []
     cap = cv2.VideoCapture('../videos/3.mp4')
 
-    cap.set(3,640)
-    cap.set(4,480)
+    
     #MOG 2 background substraction
     fgbg = cv2.createBackgroundSubtractorMOG2(detectShadows=False)
     
@@ -37,10 +38,21 @@ def run():
         exit()
 
     # Start time
-    # start = time.time()
+    (major_ver, minor_ver, subminor_ver) = (cv2.__version__).split('.')
 
+    if int(major_ver)  < 3 :
+        fps = cap.get(cv2.cv.CV_CAP_PROP_FPS)
+        print "Frames per second using video.get(cv2.cv.CV_CAP_PROP_FPS): {0}".format(fps)
+    else :
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        print "Frames per second using video.get(cv2.CAP_PROP_FPS) : {0}".format(fps)
+     
+    print fps
     isTimerStarted = False
     isTimerFinished = False
+    timePassed = 0
+    frameCounter = 0
+    isRaceFinished = False
     while True:
         
         if 'cntsNew' in locals():
@@ -49,8 +61,12 @@ def run():
         #read frame
         ret, frame = cap.read()
 
-        frame = cv2.resize(frame, (640, 480))  
+        if not ret:
+            print "Error: Cannot capture frame device"
+            os._exit(1)
+        # frame = cv2.resize(frame, (640, 480))  
         #BGR to gray
+        
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         #denoised = cv2.fastNlMeansDenoising(gray, 10, 21, 7)
@@ -92,19 +108,31 @@ def run():
                             cv2.circle(frame,(cXjM,cYjM), 50, (0,0,255), 2)
                         
         cv2.drawContours(frame, cntsNew, -1, (255,0,0), -1)
-        if (timer.isStarted(points, cntsNew)):
+        if (timer.isStarted(points, cntsNew) and isTimerStarted==False):
             print "Started"
-        if (timer.isFinished(points, cntsNew)):
+            isTimerStarted = True
+        if (timer.isFinished(points, cntsNew) and isTimerFinished==False):
             print "Finished"
+            isTimerFinished = True
+            
         frame = drawStartAndFinishLines(points, frame)
+        #timer
+        if (isTimerStarted):
+            frameCounter += 1
+            timePassed = (frameCounter/fps)
+            if (not(isRaceFinished)):
+                print timePassed
 
-        
+        if (isTimerFinished and not(isRaceFinished)):
+            print "Race time: {}", timePassed
+            isRaceFinished = True
         cv2.namedWindow('frame',cv2.WINDOW_NORMAL)
-        cv2.resizeWindow('frame', 640,480)
+        # cv2.resizeWindow('frame', 640,480)
         cv2.imshow('frame',frame)
         if cv2.waitKey(1) & 0xFF == ord(' '):
             break
-            exit()
+            os._exit(1)
+    os._exit(1)
     cap.release()
     cv2.destroyAllWindows()
 
