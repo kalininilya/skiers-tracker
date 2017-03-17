@@ -15,7 +15,7 @@ def run():
     prevCnts = []
     cap = cv2.VideoCapture('../videos/3.mp4')
 
-    
+    font = cv2.FONT_HERSHEY_SIMPLEX
     #MOG 2 background substraction
     fgbg = cv2.createBackgroundSubtractorMOG2(detectShadows=False)
     
@@ -107,14 +107,14 @@ def run():
                         if (((cXiM-cXjM) < 20) and ((cYiM-cYjM) < 20)):
                             cv2.circle(frame,(cXjM,cYjM), 50, (0,0,255), 2)
                         
-        cv2.drawContours(frame, cntsNew, -1, (255,0,0), -1)
+        cv2.drawContours(frame, cntsNew, 0, (255,0,0), 2)
         if (timer.isStarted(points, cntsNew) and isTimerStarted==False):
             print "Started"
             isTimerStarted = True
         if (timer.isFinished(points, cntsNew) and isTimerFinished==False):
             print "Finished"
             isTimerFinished = True
-            
+        
         frame = drawStartAndFinishLines(points, frame)
         #timer
         if (isTimerStarted):
@@ -122,9 +122,14 @@ def run():
             timePassed = (frameCounter/fps)
             if (not(isRaceFinished)):
                 print timePassed
+                text = "Time: " + str(round(timePassed,3))
+                cv2.putText(frame, text,(50,50), font, 1,(255,255,255),2)
+
 
         if (isTimerFinished and not(isRaceFinished)):
             print "Race time: {}", timePassed
+            text = "Race finished with a race time: " + str(round(timePassed,3))
+            cv2.putText(frame, text,(50,150), font, 1,(255,255,255),2)
             isRaceFinished = True
         cv2.namedWindow('frame',cv2.WINDOW_NORMAL)
         # cv2.resizeWindow('frame', 640,480)
