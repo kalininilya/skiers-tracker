@@ -31,7 +31,7 @@ def run():
     # Retrieve an image and Display it.
     retval, img = cap.read()
     if not retval:
-        print "Error: Cannot capture frame device"
+        print "Error:Cannot capture frame device"
         exit()
 
     points = setLines.run(img)
