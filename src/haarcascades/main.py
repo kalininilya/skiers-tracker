@@ -23,7 +23,7 @@ if __name__ == '__main__':
     cap=cv2.VideoCapture('../../videos/3.mp4')
     while True:
         _,frame=cap.read()
-        found,w=hog.detectMultiScale(frame, winStride=(8,8), padding=(32,32), scale=1.05)
+        found,w=hog.detectMultiScale(frame, winStride=(8,8), padding=(16,16), scale=1)
         draw_detections(frame,found)
         cv2.imshow('feed',frame)
         ch = 0xFF & cv2.waitKey(1)
