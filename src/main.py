@@ -4,6 +4,8 @@ import setLines
 import time
 import timer
 import os
+from keras.models import load_model
+from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 
 
 def drawStartAndFinishLines(points, frame):
@@ -15,8 +17,15 @@ def drawStartAndFinishLines(points, frame):
 
 
 def run():
+
+    #cnn
+    model = load_model('my_model.h5')
+    model.load_weights('first_try.h5', by_name=True)
+    datagen = ImageDataGenerator(rescale=1. / 255)
+    ###
     prevCnts = []
     cap = cv2.VideoCapture('../videos/3.mp4')
+    # cap = cv2.VideoCapture('../../full-test.mp4')
 
     font = cv2.FONT_HERSHEY_SIMPLEX
     # MOG 2 background substraction
@@ -77,13 +86,6 @@ def run():
         # MOG mask
         fgmask = fgbg.apply(blur)
 
-        # __________________________
-        # Canny filter
-        # cannyMin = cv2.getTrackbarPos('CannyMin','edges')
-        # cannyMax = cv2.getTrackbarPos('CannyMax','edges')
-        # edges = cv2.Canny(fgmask,cannyMin,cannyMax)
-        # __________________________
-
         im2, contours, hierarchy = cv2.findContours(fgmask, cv2.RETR_TREE,
                                                     cv2.CHAIN_APPROX_SIMPLE)
 
@@ -109,15 +111,45 @@ def run():
                         cYjM = int(jM["m01"] / jM["m00"])
 
                         if (cXiM - cXjM) < 20 and (cYiM - cYjM) < 20:
-                            cv2.circle(frame, (cXjM, cYjM), 50, (0, 0, 255), 2)
+                            # cv2.circle(frame, (cXjM, cYjM), 50, (0, 0, 255), 2)
+                            x, y, w, h = cv2.boundingRect(i)
 
-        cv2.drawContours(frame, cntsNew, 0, (255, 0, 0), 2)
-        if (timer.isStarted(points, cntsNew) and isTimerStarted == False):
-            print "Started"
-            isTimerStarted = True
-        if (timer.isFinished(points, cntsNew) and isTimerFinished == False):
-            print "Finished"
-            isTimerFinished = True
+                            deltaX = int((80 - w) / 2)
+                            deltaY = int((80 - h) / 2)
+
+                            if (y - deltaY < 0 or x - deltaX < 0 or
+                                    x - deltaX + 80 > len(frame[0]) or
+                                    y - deltaY + 80 > len(frame)):
+                                continue
+                            roi = frame[y - deltaY:y - deltaY + 80, x - deltaX:
+                                        x - deltaX + 80]
+
+                            img = roi
+
+                            x = img[None, :80, :80, :3]
+
+                            for batch in datagen.flow(x, batch_size=1):
+                                prediction = model.predict_on_batch(batch)
+                                # print prediction[0][0]
+                                break
+                            # while True:
+                            #     cv2.imshow('frame', roi)
+                            if prediction > 0.1:
+                                cv2.circle(frame, (cXjM, cYjM), 4, (0, 255, 0),
+                                           -1)
+                            # else:
+                            # cv2.circle(frame, (cXjM, cYjM), 4, (0, 0, 255),
+                            #            -1)
+
+                            # cv2.drawContours(frame, cntsNew, 0, (255, 0, 0), 2)
+                            if (timer.isStarted(points, cXiM, cYiM) and
+                                    isTimerStarted == False):
+                                print "Started"
+                                isTimerStarted = True
+                            if (timer.isFinished(points, cXiM, cYiM) and
+                                    isTimerFinished == False):
+                                print "Finished"
+                                isTimerFinished = True
 
         frame = drawStartAndFinishLines(points, frame)
         # timer
@@ -125,7 +157,7 @@ def run():
             frameCounter += 1
             timePassed = (frameCounter / fps)
             if (not (isRaceFinished)):
-                print timePassed
+                # print timePassed
                 text = "Time: " + str(round(timePassed, 3))
                 cv2.putText(frame, text, (50, 50), font, 1, (255, 255, 255), 2)
 
@@ -135,9 +167,11 @@ def run():
                 str(round(timePassed, 3))
             cv2.putText(frame, text, (50, 150), font, 1, (255, 255, 255), 2)
             isRaceFinished = True
-        cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
+            isTimerStarted = False
+            isTimerFinished = False
+        # cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
         # cv2.resizeWindow('frame', 640,480)
-        cv2.imshow('fgmask', fgmask)
+        # cv2.imshow('fgmask', fgmask)
 
         cv2.imshow('frame', frame)
         if cv2.waitKey(1) & 0xFF == ord(' '):
