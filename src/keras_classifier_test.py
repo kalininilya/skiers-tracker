@@ -3,16 +3,21 @@ from keras.models import Sequential
 from keras.layers import Conv2D, MaxPooling2D
 from keras.layers import Activation, Dropout, Flatten, Dense
 from keras import backend as K
+import tensorflow as tf
 import os
-
+from keras.utils import plot_model
+import keras.callbacks
 # dimensions of our images.
 img_width, img_height = 80, 80
+
+tensorboard = keras.callbacks.TensorBoard(
+    log_dir="logs", write_graph=True, write_images=True)
 
 train_data_dir = 'data/train'
 validation_data_dir = 'data/validation'
 nb_train_samples = 1800
 nb_validation_samples = 600
-epochs = 13
+epochs = 15
 batch_size = 16
 
 if K.image_data_format() == 'channels_first':
@@ -62,13 +67,15 @@ validation_generator = test_datagen.flow_from_directory(
     target_size=(img_width, img_height),
     batch_size=batch_size,
     class_mode='binary')
+# plot_model(model, to_file='model.png')
 
 model.fit_generator(
     train_generator,
     steps_per_epoch=nb_train_samples // batch_size,
     epochs=epochs,
+    callbacks=[tensorboard],
     validation_data=validation_generator,
     validation_steps=nb_validation_samples // batch_size)
 
-model.save('my_model.h5')
-model.save_weights('first_try.h5')
+# model.save('my_model2.h5')
+# model.save_weights('first_try2.h5')

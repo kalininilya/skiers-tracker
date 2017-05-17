@@ -11,8 +11,6 @@ icf = 1000
 
 def cropAndSavePositive(img, x, y):
     global icp
-    # crop_img = img[y - 64:y + 128, x - 64:x + 128].copy()
-
     path_output_dir = 'images/positive'
     img_name = os.path.join(path_output_dir, '%d.png') % icp
     icp += 1
@@ -22,25 +20,18 @@ def cropAndSavePositive(img, x, y):
 
 def cropAndSaveFalse(img, x, y):
     global icf
-
-    # crop_img = img[y - 64:y + 128, x - 64:x + 128].copy()
     path_output_dir = 'images/false'
     img_name = os.path.join(path_output_dir, '%d.png') % icf
     icf += 1
     print img_name
     cv2.imwrite(os.path.join(path_output_dir, '%d.png') % icf, img)
-    # cv2.imwrite(img_name, img)
 
 
 def chooseImages(img, x, y):
-    # cv2.rectangle(img, (x - 64, y - 64), (x + 64, y + 64), (255, 0, 0), 2)
-    # crop_img = img[y - 64:y + 128, x - 64:x + 128].copy()
-
-    # roi = fgmask[y - deltaY:y - deltaY + 80, x - deltaX:x - deltaX + 80]
     while True:
         cv2.imshow("Choose false or positive", img)
         k = cv2.waitKey(0)
-
+        #keycodes depend on the OS(Linux/Win/Mac) you are using
         if k == 102:
             cropAndSaveFalse(img, x, y)
             break
@@ -125,10 +116,7 @@ def run():
 
         cntsNew = []
         for key in contours:
-            #epsilon = 0.05 * cv2.arcLength(key, True)
             approx = cv2.approxPolyDP(key, 1, True)
-            # print approx
-            # print "_______________"
             if cv2.contourArea(approx) > 20 and cv2.arcLength(key, True) > 30:
                 cntsNew.append(approx)
         for j in prevCnts:
@@ -172,5 +160,4 @@ def run():
 
 
 if __name__ == "__main__":
-
     run()

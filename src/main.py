@@ -4,6 +4,7 @@ import setLines
 import time
 import timer
 import os
+import datetime
 from keras.models import load_model
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
 
@@ -17,7 +18,6 @@ def drawStartAndFinishLines(points, frame):
 
 
 def run():
-
     #cnn
     model = load_model('my_model.h5')
     model.load_weights('first_try.h5', by_name=True)
@@ -72,31 +72,33 @@ def run():
             prevCnts = cntsNew
         # read frame
         ret, frame = cap.read()
-
+        frame2 = frame.copy()
         if not ret:
             print "Error: Cannot capture frame device"
             os._exit(1)
         # frame = cv2.resize(frame, (640, 480))
         # BGR to gray
-
+        time1 = datetime.datetime.now()
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
         #denoised = cv2.fastNlMeansDenoising(gray, 10, 21, 7)
         blur = cv2.GaussianBlur(gray, (5, 5), 2)
         # MOG mask
-        fgmask = fgbg.apply(blur)
+        fgmask = fgbg.apply(gray)
 
         im2, contours, hierarchy = cv2.findContours(fgmask, cv2.RETR_TREE,
                                                     cv2.CHAIN_APPROX_SIMPLE)
 
         cntsNew = []
+
         for key in contours:
             #epsilon = 0.05 * cv2.arcLength(key, True)
             approx = cv2.approxPolyDP(key, 1, True)
             # print approx
             # print "_______________"
-            if cv2.contourArea(approx) > 50 and cv2.arcLength(key, True) > 70:
+            if cv2.contourArea(approx) > 1 and cv2.arcLength(key, True) > 1:
                 cntsNew.append(approx)
+        cv2.drawContours(frame2, contours, 0, (0, 255, 0), 2)
         for j in prevCnts:
             for i in cntsNew:
                 if (cv2.arcLength(i, True) - cv2.arcLength(j, True)) < 50:
@@ -141,7 +143,7 @@ def run():
                             # cv2.circle(frame, (cXjM, cYjM), 4, (0, 0, 255),
                             #            -1)
 
-                            # cv2.drawContours(frame, cntsNew, 0, (255, 0, 0), 2)
+                            # cv2.drawContours(frame2, cntsNew, 0, (0, 255, 0),1)
                             if (timer.isStarted(points, cXiM, cYiM) and
                                     isTimerStarted == False):
                                 print "Started"
@@ -150,7 +152,8 @@ def run():
                                     isTimerFinished == False):
                                 print "Finished"
                                 isTimerFinished = True
-
+        time2 = datetime.datetime.now()
+        print time2 - time1
         frame = drawStartAndFinishLines(points, frame)
         # timer
         if (isTimerStarted):
@@ -169,11 +172,11 @@ def run():
             isRaceFinished = True
             isTimerStarted = False
             isTimerFinished = False
-        # cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
-        # cv2.resizeWindow('frame', 640,480)
-        # cv2.imshow('fgmask', fgmask)
-
-        cv2.imshow('frame', frame)
+            # cv2.namedWindow('frame', cv2.WINDOW_NORMAL)
+            # cv2.resizeWindow('frame', 640,480)
+            # cv2.imshow('fgmask', fgmask)
+        cv2.imshow('fgmask', fgmask)
+        cv2.imshow('frame2', frame2)
         if cv2.waitKey(1) & 0xFF == ord(' '):
             break
             os._exit(1)
