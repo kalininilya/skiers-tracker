@@ -96,7 +96,7 @@ def run():
             approx = cv2.approxPolyDP(key, 1, True)
             # print approx
             # print "_______________"
-            if cv2.contourArea(approx) > 1 and cv2.arcLength(key, True) > 1:
+            if cv2.contourArea(approx) > 50 and cv2.arcLength(key, True) > 70:
                 cntsNew.append(approx)
         cv2.drawContours(frame2, contours, 0, (0, 255, 0), 2)
         for j in prevCnts:
